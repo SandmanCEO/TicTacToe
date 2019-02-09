@@ -7,14 +7,16 @@ import java.net.Socket;
 public class MainServer {
     public static void main(String args[]) {
         ServerSocket serverSocket = null;
-
         try {
-            serverSocket = new ServerSocket(4444);
+            serverSocket = new ServerSocket(4943);
+            GameBoard board = new GameBoard();
 
+             Socket socket1 = serverSocket.accept();
+             new PlayerThread(socket1, false, board).start();
 
-            Socket socketPlayer1 = serverSocket.accept();
+            Socket socket2 = serverSocket.accept();
+            new PlayerThread(socket2, true, board).start();
 
-            Socket socketPlayer2 = serverSocket.accept();
         } catch (Exception e) {
             System.err.println(e);
         } finally {
