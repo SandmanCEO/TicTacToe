@@ -23,64 +23,128 @@ public class PlayerThread extends Thread{
         }
     }
 
-    public void run(){
+    void setLeadingSymbol(boolean symbol){
+        if(leadingSymbol == true)
+            out.println(1);
+        else
+            out.println(0);
+        out.flush();
+    }
+
+    void sendLastMove(){
         int[] lastMove;
-        String instruction = "";
 
         try {
-            if(leadingSymbol == true) {
-                out.println(1);
-                out.flush();
+            while (!board.isEnemyMadeMove()) {
+                sleep(500);
+            }
+            System.out.println("getting last move");
+            lastMove = board.getLastMove();
+            board.setEnemyMadeMove(false);
 
+            sendEnemyMove();
 
-                while(!instruction.equals("end")){
-                    board.setLock();
+            for (int m : lastMove)
+                out.println(m);
+            out.flush();
+        } catch (Exception e){
+            System.err.println(e);
+        }
+    }
 
-                    lastMove = board.getLastMove();
-                    for(int move : lastMove)
-                        out.println(move);
-                    out.flush();
+    void sendWinner(){
+        try{
+            out.println("youWon");
+            out.flush();
+        } catch (Exception e){
+            System.err.println(e);
+        }
+    }
 
-                    instruction = in.readLine();
+    void sendLoser(){
+        try{
+            out.println("youLose");
+            out.flush();
+        } catch (Exception e){
+            System.err.println(e);
+        }
+    }
 
-                    if(instruction.equals("action")){
-                        board.setNewSymbol(leadingSymbol, Integer.parseInt(in.readLine()), Integer.parseInt(in.readLine()));
-                        board.printBoard();
-                        board.setUnlock();
-                        sleep(500);
-                    }
-                }
+    void sendDraw(){
+        try{
+            out.println("draw");
+            out.flush();
+        } catch (Exception e){
+            System.err.println(e);
+        }
+    }
 
-            } else{
-                out.println(0);
-                out.flush();
+    void sendNextMove(){
+        try{
+            out.println("nextMove");
+            out.flush();
+        } catch (Exception e){
+            System.err.println(e);
+        }
+    }
 
-                board.setLock();
-                instruction = in.readLine();
-                if(instruction.equals("action")){
-                    board.setNewSymbol(leadingSymbol, Integer.parseInt(in.readLine()), Integer.parseInt(in.readLine()));
-                    board.printBoard();
-                    board.setUnlock();
+    void sendEnemyMove(){
+        try{
+            out.println("enemyMove");
+            out.flush();
+        } catch (Exception e){
+            System.err.println(e);
+        }
+    }
+
+    public void run(){
+        try {
+            if(leadingSymbol == false) {
+                setLeadingSymbol(false);
+                while (!board.isPlayer2connected()){
                     sleep(500);
                 }
-
-                while(!instruction.equals("end")){
-                    board.setLock();
-
-                    lastMove = board.getLastMove();
-                    for(int move : lastMove)
-                        out.println(move);
-                    out.flush();
-
-                    instruction = in.readLine();
-
-                    if(instruction.equals("action")){
+                out.println("player2connected");
+                out.flush();
+                while (true){
+                    if(board.isDraw()){
+                        sendDraw();
+                    } else if(board.isFinished()){
+                        sendLoser();
+                    }else {
+                        sendNextMove();
                         board.setNewSymbol(leadingSymbol, Integer.parseInt(in.readLine()), Integer.parseInt(in.readLine()));
-                        board.printBoard();
-                        board.setUnlock();
-                        sleep(500);
+                        board.setEnemyMadeMove(true);
+                        if (board.isFinished()) {
+                            sendWinner();
+                        }else if(board.isDraw())
+                            sendDraw();
+                        sleep(1000);
+                        sendLastMove();
                     }
                 }
+            } else{
+                setLeadingSymbol(true);
+                board.setPlayer2connected(true);
+                sendLastMove();
+                while (true){
+                    if(board.isDraw()){
+                        sendDraw();
+                    } else if(board.isFinished()){
+                        sendLoser();
+                    }else {
+                        sendNextMove();
+                        board.setNewSymbol(leadingSymbol, Integer.parseInt(in.readLine()), Integer.parseInt(in.readLine()));
+                        board.setEnemyMadeMove(true);
+                        if (board.isFinished()) {
+                            sendWinner();
+                        }else if (board.isDraw())
+                            sendDraw();
+                        sleep(1000);
+                        sendLastMove();
+                    }
+                }
+
             }
 
         } catch (Exception e){

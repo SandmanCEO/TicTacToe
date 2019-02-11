@@ -14,16 +14,20 @@ import javafx.stage.Stage;
 import server.GameBoard;
 
 import java.io.BufferedReader;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.lang.Integer.parseInt;
 
 public class MainClient extends Application {
     Stage window;
-    Scene setConnection, gameBoard;
-    ClientTCP connection;
+    Scene setConnection, gameBoard, waitForPlayer, finish;
     Button[] buttons;
     boolean leadingSymbol;
     GameBoard board;
+    Text result;
+    ClientTCP connection;
 
     void setConnectionFunction(){
         Text portText = new Text ("Podaj numer portu serwera");
@@ -33,21 +37,36 @@ public class MainClient extends Application {
         TextField inputIP = new TextField();
         inputIP.setText("192.168.1.112");
         Button exit = new Button ("Wyjście");
+        Button connectButton = new Button ("Połącz");
         exit.setOnAction( e -> {
             window.close();
         });
-        Button connectButton = new Button ("Połącz");
+
         connectButton.setOnAction( e -> {
+            window.setScene(waitForPlayer);
             connection = new ClientTCP(inputIP.getText(), Integer.parseInt(inputPort.getText()));
             leadingSymbol = connection.getLeadingSymbol();
             System.out.println(leadingSymbol);
-            board = new GameBoard();
-            board.setBlankBoard();
-            board.printBoard();
-            if(leadingSymbol == false)
+            if(leadingSymbol == false) {
+                WaitForPlayer task = new WaitForPlayer(connection);
+
+                task.setOnSucceeded(successEvent -> {
+                    if (task.getValue() == true) {
+                        window.setScene(gameBoard);
+                        waitForInstruction();
+                    }
+                });
+
+                ExecutorService executorService = Executors.newFixedThreadPool(1);
+                executorService.execute(task);
+                executorService.shutdown();
+                setDisableButtons();
+            } else {
+                setDisableButtons();
                 window.setScene(gameBoard);
-            else
-                waitForEnemyMove();
+
+                waitForInstruction();
+            }
         });
 
         VBox setPortLayout = new VBox(10);
@@ -55,22 +74,6 @@ public class MainClient extends Application {
         setPortLayout.getChildren().addAll(portText,inputPort, ipText, inputIP, connectButton, exit);
 
         setConnection = new Scene (setPortLayout, 600, 400);
-    }
-
-    void waitForEnemyMove(){
-        try{
-            int m, n;
-            m = Integer.parseInt(connection.receive());
-            n = Integer.parseInt(connection.receive());
-            if(leadingSymbol == true)
-                buttons[m * 3 + n].setText("O");
-            else
-                buttons[m * 3 + n].setText("X");
-
-            window.setScene(gameBoard);
-        } catch (Exception e){
-            System.err.println(e);
-        }
     }
 
     void setGameBoard() {
@@ -83,128 +86,112 @@ public class MainClient extends Application {
         }
 
         buttons[0].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("0");
+            connection.send("0");
             if(leadingSymbol == true)
                 buttons[0].setText("X");
             else
                 buttons[0].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(0));
-            connection.send(String.valueOf(0));
-
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         buttons[1].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("0");
+            connection.send("1");
             if(leadingSymbol == true)
                 buttons[1].setText("X");
             else
                 buttons[1].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(0));
-            connection.send(String.valueOf(1));
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         buttons[2].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("0");
+            connection.send("2");
             if(leadingSymbol == true)
                 buttons[2].setText("X");
             else
                 buttons[2].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(0));
-            connection.send(String.valueOf(2));
-
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         buttons[3].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("1");
+            connection.send("0");
             if(leadingSymbol == true)
                 buttons[3].setText("X");
             else
                 buttons[3].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(1));
-            connection.send(String.valueOf(0));
-
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         buttons[4].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("1");
+            connection.send("1");
             if(leadingSymbol == true)
                 buttons[4].setText("X");
             else
                 buttons[4].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(1));
-            connection.send(String.valueOf(1));
-
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         buttons[5].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("1");
+            connection.send("2");
             if(leadingSymbol == true)
                 buttons[5].setText("X");
             else
                 buttons[5].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(1));
-            connection.send(String.valueOf(2));
-
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         buttons[6].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("2");
+            connection.send("0");
             if(leadingSymbol == true)
                 buttons[6].setText("X");
             else
                 buttons[6].setText("O");
             window.setScene(gameBoard);
+            waitForInstruction();
 
-            connection.send("action");
-            connection.send(String.valueOf(2));
-            connection.send(String.valueOf(0));
-
-            waitForEnemyMove();
         });
 
         buttons[7].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("2");
+            connection.send("1");
             if(leadingSymbol == true)
                 buttons[7].setText("X");
             else
                 buttons[7].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(2));
-            connection.send(String.valueOf(1));
-
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         buttons[8].setOnAction( e -> {
+            setDisableButtons();
+            connection.send("2");
+            connection.send("2");
             if(leadingSymbol == true)
                 buttons[8].setText("X");
             else
                 buttons[8].setText("O");
             window.setScene(gameBoard);
-
-            connection.send("action");
-            connection.send(String.valueOf(2));
-            connection.send(String.valueOf(2));
-
-            waitForEnemyMove();
+            waitForInstruction();
         });
 
         GridPane gridPane = new GridPane();
@@ -225,6 +212,81 @@ public class MainClient extends Application {
         gameBoard=new Scene(gridPane, 600,400);
     }
 
+
+    void setWaitForPlayer(){
+        Text waitText = new Text("Czekam na drugiego gracza");
+
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(waitText);
+        waitForPlayer = new Scene(layout, 600, 400);
+    }
+
+    void setFinish(){
+        result = new Text("");
+
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(result);
+        finish = new Scene(layout, 600, 400);
+    }
+
+    void setDisableButtons(){
+        for(Button button : buttons)
+            button.setDisable(true);
+    }
+
+    void setEnableButtons(){
+        for(Button button : buttons)
+            button.setDisable(false);
+    }
+
+    void setNewMove(int m, int n){
+        if(leadingSymbol == true)
+            buttons[m * 3 + n].setText("O");
+        else
+            buttons[m * 3 + n].setText("X");
+    }
+
+    void waitForPlayerMove(){
+        GetLastMove task = new GetLastMove(connection);
+
+        task.setOnSucceeded(successEvent -> {
+            int[] temp = task.getValue();
+            setNewMove(temp[0], temp[1]);
+            window.setScene(gameBoard);
+        });
+
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        executorService.execute(task);
+        executorService.shutdown();
+
+        waitForInstruction();
+    }
+
+    void waitForInstruction(){
+        GetInstruction task = new GetInstruction(connection);
+        task.setOnSucceeded(successEvent -> {
+            String instruction = task.getValue();
+            if(instruction.equals("draw")){
+                result.setText("Remis!");
+                window.setScene(finish);
+            } else if(instruction.equals("youWon")){
+                result.setText("Wygrałeś!");
+                window.setScene(finish);
+            }else if(instruction.equals("youLose")){
+                result.setText("Przegrałeś!");
+                window.setScene(finish);
+            }else if(instruction.equals("nextMove")){
+                setEnableButtons();
+            }else if(instruction.equals("enemyMove")){
+                waitForPlayerMove();
+            }
+        });
+
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        executorService.execute(task);
+        executorService.shutdown();
+    }
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         window = primaryStage;
@@ -232,6 +294,8 @@ public class MainClient extends Application {
 
         setConnectionFunction();
         setGameBoard();
+        setWaitForPlayer();
+        setFinish();
 
         window.setScene(setConnection);
         window.show();

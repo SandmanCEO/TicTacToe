@@ -5,7 +5,7 @@ import server.GameBoard;
 import java.io.*;
 import java.net.Socket;
 
-public class ClientTCP {
+public class ClientTCP{
     Socket socket;
     PrintWriter out;
     BufferedReader in;
@@ -35,7 +35,6 @@ public class ClientTCP {
         try {
             temp = in.readLine();
             tempint = Integer.parseInt(temp);
-            System.out.println(temp);
         } catch (Exception e) {
             System.err.println(e);
         }
@@ -53,13 +52,11 @@ public class ClientTCP {
     public String receive(){
         String temp = null;
         try{
-            while(!in.ready()){
-
-            }
             temp = in.readLine();
         }catch (Exception e){
             System.err.print(e);
         }
         return temp;
     }
+
 }
