@@ -1,0 +1,9 @@
+.root{
+    -fx-background-color: purple;
+    -fx-font-size: 10pt;
+    -fx-font-family: "SansSerif";
+}
+
+.button{
+    -fx-background-color: purple;
+}

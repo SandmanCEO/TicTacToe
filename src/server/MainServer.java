@@ -1,5 +1,7 @@
 package server;
 
+import entity.GameBoard;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -18,7 +20,7 @@ public class MainServer {
             new PlayerThread(socket2, true, board).start();
 
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
         } finally {
             if (serverSocket != null)
                 try {

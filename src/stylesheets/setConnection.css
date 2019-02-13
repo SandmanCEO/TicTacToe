@@ -1,0 +1,14 @@
+.root{
+    -fx-background-color: purple;
+    -fx-font-size: 10pt;
+    -fx-font-family: "SansSerif";
+}
+
+.text-field{
+    -fx-alignment: CENTER;
+    -fx-background-color: red;
+}
+
+#setPortLayout{
+    -fx-padding: 10;
+}

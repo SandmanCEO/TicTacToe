@@ -1,47 +1,42 @@
 package client;
 
-import server.GameBoard;
-
 import java.io.*;
 import java.net.Socket;
 
 public class ClientTCP{
-    Socket socket;
-    PrintWriter out;
-    BufferedReader in;
+    private PrintWriter out;
+    private BufferedReader in;
 
-    public ClientTCP(String ip, int port) {
+    ClientTCP(String ip, int port) {
         try {
-            this.socket = new Socket(ip, port);
+            Socket socket = new Socket(ip, port);
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
         }
     }
 
-    public void send(String text){
+    void send(String text){
         try{
             out.println(text);
             out.flush();
         } catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
         }
     }
 
-    public boolean getLeadingSymbol() {
-        String temp = null;
-        int tempint = -1;
+    boolean getLeadingSymbol() {
+        int temp = -1;
         try {
-            temp = in.readLine();
-            tempint = Integer.parseInt(temp);
+            temp = Integer.parseInt(in.readLine());
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
         }
 
-        if(tempint == 0)
+        if(temp == 0)
             return false;
-        else if(tempint == 1)
+        else if(temp == 1)
             return true;
         else{
             System.out.println("NULL");
@@ -54,7 +49,7 @@ public class ClientTCP{
         try{
             temp = in.readLine();
         }catch (Exception e){
-            System.err.print(e);
+            e.printStackTrace();
         }
         return temp;
     }

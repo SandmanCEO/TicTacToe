@@ -1,27 +1,21 @@
-package server;
-
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+package entity;
 
 public class GameBoard {
-    Lock lock;
-    boolean player2connected, enemyMadeMove;
-    int[][] board;
-    int[] lastMove;
-    int moves;
+    private boolean player2connected, enemyMadeMove;
+    private int[][] board;
+    private int[] lastMove;
+    private int moves;
 
     public GameBoard() {
         this.board = new int[3][3];
         setBlankBoard();
-        lock = new ReentrantLock();
         lastMove = new int[2];
         player2connected = enemyMadeMove = false;
         moves = 0;
     }
 
     public void setNewSymbol(boolean leadingSymbol, int m, int n){
-        if(leadingSymbol == true)
+        if(leadingSymbol)
             board[m][n] = 1;
         else
             board[m][n] = 0;
@@ -42,12 +36,12 @@ public class GameBoard {
                 System.out.print(board[i][j] + " ");
                 j += 1;
             }
-            System.out.println("");
+            System.out.println(" ");
             i += 1;
         }
     }
 
-    public void setBlankBoard(){
+    private void setBlankBoard(){
         int i = 0;
         while( i < 3){
             int j = 0;
@@ -57,14 +51,6 @@ public class GameBoard {
             }
             i += 1;
         }
-    }
-
-    public void setLock(){
-        lock.lock();
-    }
-
-    public void setUnlock(){
-        lock.unlock();
     }
 
     public boolean isFinished(){
@@ -77,20 +63,13 @@ public class GameBoard {
             else
                 k += 1;
         }
-        if(board[0][0] == board[1][1] && board[0][0] == board[2][2] && board[0][0] != -1)
-            return true;
-        else if(board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != -1)
-            return true;
-        else
-            return false;
+        return (board[0][0] == board[1][1] && board[0][0] == board[2][2] && board[0][0] != -1) ||
+                (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != -1);
 
     }
 
     public boolean isDraw(){
-        if(!isFinished() && moves > 8)
-            return true;
-        else
-            return false;
+        return (!isFinished() && moves > 8);
     }
 
     public boolean isPlayer2connected() {

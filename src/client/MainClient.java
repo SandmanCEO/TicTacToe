@@ -1,57 +1,60 @@
 package client;
 
+import client.task.GetInstruction;
+import client.task.GetLastMove;
+import client.task.WaitForPlayer;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import server.GameBoard;
-
-import java.io.BufferedReader;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static java.lang.Integer.parseInt;
-
 public class MainClient extends Application {
-    Stage window;
-    Scene setConnection, gameBoard, waitForPlayer, finish;
-    Button[] buttons;
-    boolean leadingSymbol;
-    GameBoard board;
-    Text result;
-    ClientTCP connection;
+    private Stage window;
+    private Scene setConnection, gameBoard, waitForPlayer, finish;
+    private Button[] buttons;
+    private boolean leadingSymbol;
+    private boolean[] usedButtons;
+    private Text result;
+    private ClientTCP connection;
+    private Image blankImg, circleImg, crossImg;
 
-    void setConnectionFunction(){
+    private void setConnectionFunction(){
+        Text welcomeText = new Text("Witaj w grze kółko i krzyżyk!");
+        welcomeText.setStyle("-fx-font-size: 16pt;");
         Text portText = new Text ("Podaj numer portu serwera");
         TextField inputPort = new TextField();
         inputPort.setText("4943");
+        inputPort.setMaxWidth(120);
         Text ipText = new Text ("Podaj IP");
         TextField inputIP = new TextField();
         inputIP.setText("192.168.1.112");
+        inputIP.setMaxWidth(120);
         Button exit = new Button ("Wyjście");
         Button connectButton = new Button ("Połącz");
-        exit.setOnAction( e -> {
-            window.close();
-        });
+        exit.setOnAction( e -> window.close());
 
         connectButton.setOnAction( e -> {
             window.setScene(waitForPlayer);
             connection = new ClientTCP(inputIP.getText(), Integer.parseInt(inputPort.getText()));
             leadingSymbol = connection.getLeadingSymbol();
             System.out.println(leadingSymbol);
-            if(leadingSymbol == false) {
+            if(!leadingSymbol) {
                 WaitForPlayer task = new WaitForPlayer(connection);
 
                 task.setOnSucceeded(successEvent -> {
-                    if (task.getValue() == true) {
+                    if (task.getValue()) {
                         window.setScene(gameBoard);
                         waitForInstruction();
                     }
@@ -69,135 +72,62 @@ public class MainClient extends Application {
             }
         });
 
-        VBox setPortLayout = new VBox(10);
-        setPortLayout.setPadding(new Insets(20,20,20,20));
-        setPortLayout.getChildren().addAll(portText,inputPort, ipText, inputIP, connectButton, exit);
+        BorderPane border = new BorderPane();
+        GridPane setPortLayout = new GridPane();
+        HBox top = new HBox();
+        border.setTop(top);
+        border.setCenter(setPortLayout);
 
-        setConnection = new Scene (setPortLayout, 600, 400);
+        top.getChildren().add(welcomeText);
+        top.setPadding(new Insets(50, 100, 20, 150));
+
+        setPortLayout.setVgap(10);
+        setPortLayout.setHgap(30);
+        setPortLayout.setPadding(new Insets(40, 50, 200, 150));
+
+        setPortLayout.add(ipText, 0, 0, 1, 1);
+        setPortLayout.add(inputIP, 0, 1, 1, 1);
+        setPortLayout.add(portText, 1, 0, 1, 1);
+        setPortLayout.add(inputPort, 1, 1, 1, 1);
+        setPortLayout.add(connectButton, 0, 2, 1, 1);
+        setPortLayout.add(exit, 1, 2, 1, 1);
+
+        setConnection = new Scene (border, 600, 400);
+        setConnection.getStylesheets().addAll("stylesheets/setConnection.css");
     }
 
-    void setGameBoard() {
+    private void setGameBoard() {
         buttons = new Button[9];
 
         int index = 0;
         while(index < 9){
-            buttons[index] = new Button("  ");
+            buttons[index] = new Button("", new ImageView(blankImg));
             index += 1;
         }
 
-        buttons[0].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("0");
-            connection.send("0");
-            if(leadingSymbol == true)
-                buttons[0].setText("X");
-            else
-                buttons[0].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
+        buttons[0].setOnAction( e -> buttonHandler(0));
 
-        buttons[1].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("0");
-            connection.send("1");
-            if(leadingSymbol == true)
-                buttons[1].setText("X");
-            else
-                buttons[1].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
+        buttons[1].setOnAction( e -> buttonHandler(1));
 
-        buttons[2].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("0");
-            connection.send("2");
-            if(leadingSymbol == true)
-                buttons[2].setText("X");
-            else
-                buttons[2].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
+        buttons[2].setOnAction( e -> buttonHandler(2));
 
-        buttons[3].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("1");
-            connection.send("0");
-            if(leadingSymbol == true)
-                buttons[3].setText("X");
-            else
-                buttons[3].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
+        buttons[3].setOnAction( e -> buttonHandler(3));
 
-        buttons[4].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("1");
-            connection.send("1");
-            if(leadingSymbol == true)
-                buttons[4].setText("X");
-            else
-                buttons[4].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
+        buttons[4].setOnAction( e -> buttonHandler(4));
 
-        buttons[5].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("1");
-            connection.send("2");
-            if(leadingSymbol == true)
-                buttons[5].setText("X");
-            else
-                buttons[5].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
+        buttons[5].setOnAction( e -> buttonHandler(5));
 
-        buttons[6].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("2");
-            connection.send("0");
-            if(leadingSymbol == true)
-                buttons[6].setText("X");
-            else
-                buttons[6].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
+        buttons[6].setOnAction( e -> buttonHandler(6));
 
-        });
+        buttons[7].setOnAction( e -> buttonHandler(7));
 
-        buttons[7].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("2");
-            connection.send("1");
-            if(leadingSymbol == true)
-                buttons[7].setText("X");
-            else
-                buttons[7].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
-
-        buttons[8].setOnAction( e -> {
-            setDisableButtons();
-            connection.send("2");
-            connection.send("2");
-            if(leadingSymbol == true)
-                buttons[8].setText("X");
-            else
-                buttons[8].setText("O");
-            window.setScene(gameBoard);
-            waitForInstruction();
-        });
+        buttons[8].setOnAction( e -> buttonHandler(8));
 
         GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(50, 50, 50, 175));
 
         int i, j, k;
-        i = j = k = 0;
+        i = k = 0;
 
         while(i < 3){
             j = 0;
@@ -209,44 +139,71 @@ public class MainClient extends Application {
             i += 1;
         }
 
-        gameBoard=new Scene(gridPane, 600,400);
+        gameBoard = new Scene(gridPane, 600,400);
+        gameBoard.getStylesheets().addAll("stylesheets/gameBoard.css");
     }
 
+    private void buttonHandler(int no){
+        setDisableButtons();
+        connection.send("move");
+        connection.send(String.valueOf(Math.floorDiv(no, 3)));
+        connection.send(String.valueOf(no % 3));
+        if(leadingSymbol)
+            buttons[no].setGraphic(new ImageView(crossImg));
+        else
+            buttons[no].setGraphic(new ImageView(circleImg));
+        usedButtons[no] = true;
+        window.setScene(gameBoard);
+        waitForInstruction();
+    }
 
-    void setWaitForPlayer(){
+    private void setWaitForPlayer(){
         Text waitText = new Text("Czekam na drugiego gracza");
+        waitText.setStyle("-fx-font-size: 16pt;");
 
         VBox layout = new VBox(10);
+        layout.setPadding(new Insets(50, 100, 0, 150));
         layout.getChildren().addAll(waitText);
         waitForPlayer = new Scene(layout, 600, 400);
+        waitForPlayer.getStylesheets().addAll("stylesheets/waitForPlayer.css");
     }
 
-    void setFinish(){
+    private void setFinish(){
         result = new Text("");
+        Button exit = new Button("Zakończ");
+        exit.setOnAction( e -> window.close());
 
-        VBox layout = new VBox(10);
-        layout.getChildren().addAll(result);
+        VBox layout = new VBox(40);
+        layout.setPadding(new Insets(50, 100, 100, 200));
+        layout.getChildren().addAll(result, exit);
         finish = new Scene(layout, 600, 400);
+        finish.getStylesheets().addAll("stylesheets/finish.css");
     }
 
-    void setDisableButtons(){
+    private void setDisableButtons(){
         for(Button button : buttons)
             button.setDisable(true);
     }
 
-    void setEnableButtons(){
-        for(Button button : buttons)
-            button.setDisable(false);
+    private void setEnableButtons(){
+        int k = 0;
+
+        while(k < 9){
+            if(!usedButtons[k])
+                buttons[k].setDisable(false);
+            k += 1;
+        }
     }
 
-    void setNewMove(int m, int n){
-        if(leadingSymbol == true)
-            buttons[m * 3 + n].setText("O");
+    private void setNewMove(int m, int n){
+        if(leadingSymbol)
+            buttons[m * 3 + n].setGraphic(new ImageView(circleImg));
         else
-            buttons[m * 3 + n].setText("X");
+            buttons[m * 3 + n].setGraphic(new ImageView(crossImg));
+        usedButtons[m * 3 + n] = true;
     }
 
-    void waitForPlayerMove(){
+    private void waitForPlayerMove(){
         GetLastMove task = new GetLastMove(connection);
 
         task.setOnSucceeded(successEvent -> {
@@ -262,23 +219,32 @@ public class MainClient extends Application {
         waitForInstruction();
     }
 
-    void waitForInstruction(){
+    private void waitForInstruction(){
         GetInstruction task = new GetInstruction(connection);
         task.setOnSucceeded(successEvent -> {
             String instruction = task.getValue();
-            if(instruction.equals("draw")){
-                result.setText("Remis!");
-                window.setScene(finish);
-            } else if(instruction.equals("youWon")){
-                result.setText("Wygrałeś!");
-                window.setScene(finish);
-            }else if(instruction.equals("youLose")){
-                result.setText("Przegrałeś!");
-                window.setScene(finish);
-            }else if(instruction.equals("nextMove")){
-                setEnableButtons();
-            }else if(instruction.equals("enemyMove")){
-                waitForPlayerMove();
+
+            switch (instruction){
+                case "draw":
+                    result.setText("Remis!");
+                    window.setScene(finish);
+                    break;
+                case "youWon":
+                    result.setText("Wygrałeś!");
+                    result.setFill(Color.GREEN);
+                    window.setScene(finish);
+                    break;
+                case "youLose":
+                    result.setText("Przegrałeś!");
+                    result.setFill(Color.RED);
+                    window.setScene(finish);
+                    break;
+                case "nextMove":
+                    setEnableButtons();
+                    break;
+                case "enemyMove":
+                    waitForPlayerMove();
+                    break;
             }
         });
 
@@ -288,9 +254,15 @@ public class MainClient extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage){
         window = primaryStage;
         window.setTitle("TicTacToe");
+
+        blankImg = new Image("pics/blank.jpg");
+        circleImg = new Image("pics/circle.jpg");
+        crossImg = new Image("pics/cross.jpg");
+
+        usedButtons = new boolean[9];
 
         setConnectionFunction();
         setGameBoard();
